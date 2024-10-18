@@ -18,6 +18,7 @@ warnings.filterwarnings("ignore")
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--epochs', type=int, default=100)
+parser.add_argument('--batch_size', type=int, default=5)
 parser.add_argument('--lr', type=float, default=0.001)
 parser.add_argument('--n_layer', type=int, default=5)
 parser.add_argument('--agg_hidden', type=int, default=32)
@@ -57,7 +58,7 @@ train_data = torch.load(f'{DATA_PATH}/train.pt')
 val_data = torch.load(f'{DATA_PATH}/val.pt')
 test_data = torch.load(f'{DATA_PATH}/test.pt')
 
-train_loader = DataLoader(train_data, batch_size=1, shuffle=True)
+train_loader = DataLoader(train_data, batch_size=args.batch_size, shuffle=True)
 val_loader = DataLoader(val_data, batch_size=1, shuffle=False)
 test_loader = DataLoader(test_data, batch_size=1, shuffle=False)
 
@@ -86,9 +87,10 @@ def train_step(model, train_loader, optimizer, device):
         optimizer.step()
 
         epoch_loss += loss.item()
-        predicted_class = torch.argmax(prediction)
+        predicted_class = torch.argmax(prediction, dim=1)
         correct += predicted_class.eq(graph.y).sum().item()
         total_samples += len(graph.y)
+        assert predicted_class.shape == graph.y.shape
 
     epoch_loss = epoch_loss / num_train_examples
     epoch_accuracy = correct / total_samples

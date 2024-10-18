@@ -19,6 +19,9 @@ sweep_config={
         'lr': {
             'values': [0.0005, 0.0007, 0.001, 0.005, 0.01]
         },
+        'batch_size': {
+            'values': [5, 10, 15]
+        },
         'n_layer': {
             'values': list(range(1, 11))
         },
