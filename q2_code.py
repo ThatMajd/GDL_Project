@@ -148,6 +148,12 @@ for epoch in epoch_progress:
 
     epoch_progress.set_postfix(LOG)
 
+SUMMARY_LOG = {
+    'Val/Min_Loss': min(val_losses),
+    'Val/Avg_Accuracy': np.mean(val_accs),
+    'Val/Max_Accuracy': max(val_accs),
+}
+
 if not args.wandb:
     if not os.path.exists('./results/Q2/graphs'):
         os.makedirs('./results/Q2/graphs')
@@ -172,12 +178,10 @@ if not args.wandb:
     plt.legend()
     plt.savefig('./results/Q2/graphs/accuracy.png')
 
-    # # Making predictions on the test set
+    print(SUMMARY_LOG)
+
     # print("Making predictions on the test set")
     # test_predictions(model=model, test_loader=test_loader, device=device, file_name='results/Q2/predications.csv')
 else:
-    wandb.log({
-        'Val/Min_Loss': min(val_losses),
-        'Val/Avg_Accuracy': np.mean(val_accs)
-    })
+    wandb.log(SUMMARY_LOG)
     wandb.finish()
