@@ -6,6 +6,7 @@ import tqdm
 import torch
 import numpy as np
 from torch_geometric.data import DataLoader
+import torch_geometric
 from data_part2 import CustomGraphDataset
 from torch_geometric.data import InMemoryDataset
 import torch.nn.functional as F
@@ -49,9 +50,11 @@ if args.wandb:
 DATA_PATH = "data_part2"
 
 seed = 42
-np.random.seed(seed)
-torch.manual_seed(seed)
-torch.cuda.manual_seed(seed)
+torch_geometric.seed_everything(seed)
+# np.random.seed(seed)
+# torch.manual_seed(seed)
+# torch.cuda.manual_seed(seed)
+
 torch.backends.cudnn.deterministic = True
 
 train_data = torch.load(f'{DATA_PATH}/train.pt')
@@ -103,6 +106,8 @@ def validation_step(model, train_loader, optimizer, device):
 
     total_samples = 0
 
+    model.eval()
+
     for graph in iter(train_loader):
         graph = graph.to(device)
 
@@ -113,9 +118,10 @@ def validation_step(model, train_loader, optimizer, device):
         loss = F.cross_entropy(prediction, graph.y, weight=weight)
 
         epoch_loss += loss.item()
-        predicted_class = torch.argmax(prediction)
+        predicted_class = torch.argmax(prediction, dim=1)
         correct += predicted_class.eq(graph.y).sum().item()
         total_samples += len(graph.y)
+        assert predicted_class.shape == graph.y.shape
 
     epoch_loss = epoch_loss / num_train_examples
     epoch_accuracy = correct / total_samples
