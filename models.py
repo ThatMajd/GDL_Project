@@ -12,18 +12,18 @@ AGG_METHODS = {
 }
 
 class GAT(torch.nn.Module):
-    def __init__(self, n_layer, agg_hidden, fc_hidden, in_channels=7, num_classes=2, agg_method="avg"):
+    def __init__(self, n_layer, agg_hidden, fc_hidden, in_channels=7, num_classes=2, agg_method="avg", dropout=0.5):
         super(GAT, self).__init__()
         
         self.agg_method = AGG_METHODS[agg_method]
 
         # Define the first GAT layer
         self.convs = torch.nn.ModuleList()
-        self.convs.append(GATv2Conv(in_channels, agg_hidden, heads=1, concat=True))
+        self.convs.append(GATv2Conv(in_channels, agg_hidden, heads=1, concat=True, dropout=dropout, edge_dim=4))
         
         # Add additional GAT layers
         for _ in range(n_layer - 1):
-            self.convs.append(GATv2Conv(agg_hidden, agg_hidden, heads=1, concat=True))
+            self.convs.append(GATv2Conv(agg_hidden, agg_hidden, heads=1, concat=True, dropout=dropout, edge_dim=4))
         
         # Fully connected layers after GAT aggregation
         self.fc1 = torch.nn.Linear(agg_hidden, fc_hidden)

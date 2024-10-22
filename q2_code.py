@@ -67,7 +67,7 @@ test_loader = DataLoader(test_data, batch_size=1, shuffle=False)
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-model = GraphTransformer(n_layer=args.n_layer, agg_hidden=args.agg_hidden, fc_hidden=args.fc_hidden).to(device)
+model = GAT(n_layer=args.n_layer, agg_hidden=args.agg_hidden, fc_hidden=args.fc_hidden).to(device)
 optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
 
 

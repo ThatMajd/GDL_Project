@@ -20,10 +20,10 @@ sweep_config={
             'values': [0.0005, 0.0007, 0.001, 0.005, 0.01]
         },
         'batch_size': {
-            'values': [5, 10, 15]
+            'values': [5, 10]
         },
         'n_layer': {
-            'values': list(range(1, 11))
+            'values': list(range(1, 7))
         },
         'agg_hidden': {
             'values': [8, 16, 32, 64, 128, 256]
