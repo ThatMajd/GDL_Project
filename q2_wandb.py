@@ -1,7 +1,7 @@
 import wandb
 import random
 
-wandb_username = 'majd_bishara'
+wandb_username = 'majedbishara-technion-israel-institute-of-technology'
 wandb_project = 'GDP_Project'
 
 command = ['${env}', '${interpreter}', 'q2_code.py', '${args}']
