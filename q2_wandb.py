@@ -7,7 +7,7 @@ wandb_project = 'GDP_Project'
 command = ['${env}', '${interpreter}', 'q2_code.py', '${args}']
 
 sweep_config={
-    'method': 'random',
+    'method': 'grid',
     'metric': {
         'name': 'Val/Avg_Accuracy',
         'goal': 'maximize'
@@ -19,8 +19,11 @@ sweep_config={
         'lr': {
             'values': [0.0005, 0.0007, 0.001, 0.005, 0.01]
         },
+        'weight_decay': {
+            'values': [0, 1e-3, 1e-4]
+        },
         'batch_size': {
-            'values': [5, 10]
+            'values': [1, 5]
         },
         'n_layer': {
             'values': list(range(1, 7))
@@ -32,7 +35,7 @@ sweep_config={
             'values': [8, 16, 32, 64, 128, 256]
         },
         'agg_method':{
-            'values': ["sum", "mean", "max"]
+            'values': ["sum", "max"] # Sum and mean perform the same
         },
         'wandb': {
             'value': 1

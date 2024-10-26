@@ -67,8 +67,8 @@ test_loader = DataLoader(test_data, batch_size=1, shuffle=False)
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-model = GAT(n_layer=args.n_layer, agg_hidden=args.agg_hidden, fc_hidden=args.fc_hidden).to(device)
-optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
+model = GaussianGraphSAGE(n_layer=args.n_layer, agg_hidden=args.agg_hidden, fc_hidden=args.fc_hidden).to(device)
+optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, )
 
 
 def train_step(model, train_loader, optimizer, device):
@@ -82,10 +82,13 @@ def train_step(model, train_loader, optimizer, device):
         graph = graph.to(device)
 
         optimizer.zero_grad()
-        prediction = model(graph)
+        # prediction = model(graph)
+
+        prediction, mean, log_var = model(graph)  # Forward pass
+        loss = model.loss(prediction, graph.y, mean, log_var)  # Compute loss
 
         weight = torch.tensor([2, 1], dtype=torch.float32).to(device)
-        loss = F.cross_entropy(prediction, graph.y, weight=weight)
+        # loss = F.cross_entropy(prediction, graph.y, weight=weight)
         loss.backward()
         optimizer.step()
 
@@ -112,10 +115,13 @@ def validation_step(model, train_loader, optimizer, device):
         graph = graph.to(device)
 
         with torch.no_grad():
-            prediction = model(graph)
+            # prediction = model(graph)
+            prediction, mean, log_var = model(graph)  # Forward pass
+            loss = model.loss(prediction, graph.y, mean, log_var)  # Compute loss
 
-        weight = torch.tensor([2, 1], dtype=torch.float32).to(device)
-        loss = F.cross_entropy(prediction, graph.y, weight=weight)
+        # weight = torch.tensor([2, 1], dtype=torch.float32).to(device)
+        # loss = F.cross_entropy(prediction, graph.y, weight=weight)
+
 
         epoch_loss += loss.item()
         predicted_class = torch.argmax(prediction, dim=1)
