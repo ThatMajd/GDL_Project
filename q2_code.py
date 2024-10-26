@@ -25,6 +25,7 @@ parser.add_argument('--n_layer', type=int, default=5)
 parser.add_argument('--agg_hidden', type=int, default=32)
 parser.add_argument('--fc_hidden', type=int, default=64)
 parser.add_argument('--agg_method', type=str, default="avg")
+parser.add_argument('--weight_decay', type=float, default=0)
 parser.add_argument('--wandb', type=int, default=0)  # WandB flag (0 or 1)
 args = parser.parse_args()
 
@@ -68,7 +69,7 @@ test_loader = DataLoader(test_data, batch_size=1, shuffle=False)
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 model = GaussianGraphSAGE(n_layer=args.n_layer, agg_hidden=args.agg_hidden, fc_hidden=args.fc_hidden).to(device)
-optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, )
+optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
 
 
 def train_step(model, train_loader, optimizer, device):
@@ -85,9 +86,10 @@ def train_step(model, train_loader, optimizer, device):
         # prediction = model(graph)
 
         prediction, mean, log_var = model(graph)  # Forward pass
-        loss = model.loss(prediction, graph.y, mean, log_var)  # Compute loss
 
         weight = torch.tensor([2, 1], dtype=torch.float32).to(device)
+        loss = model.loss(prediction, graph.y, mean, log_var, weight=weight)  # Compute loss
+
         # loss = F.cross_entropy(prediction, graph.y, weight=weight)
         loss.backward()
         optimizer.step()
@@ -117,9 +119,10 @@ def validation_step(model, train_loader, optimizer, device):
         with torch.no_grad():
             # prediction = model(graph)
             prediction, mean, log_var = model(graph)  # Forward pass
-            loss = model.loss(prediction, graph.y, mean, log_var)  # Compute loss
 
-        # weight = torch.tensor([2, 1], dtype=torch.float32).to(device)
+            weight = torch.tensor([2, 1], dtype=torch.float32).to(device)
+            loss = model.loss(prediction, graph.y, mean, log_var, weight=weight)  # Compute loss
+
         # loss = F.cross_entropy(prediction, graph.y, weight=weight)
 
 

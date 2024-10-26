@@ -194,9 +194,10 @@ class GaussianGraphSAGE(torch.nn.Module):
         kl_div = -0.5 * torch.sum(1 + log_var - mean.pow(2) - log_var.exp())
         return kl_div
 
-    def loss(self, pred, target, mean, log_var):
+    def loss(self, pred, target, mean, log_var, weight=None):
+        # weight = None
         # Standard classification loss
-        ce_loss = F.nll_loss(pred, target)
+        ce_loss = F.cross_entropy(pred, target, weight=weight)
         
         # KL divergence regularization
         kl_div = self.kl_divergence(mean, log_var)
