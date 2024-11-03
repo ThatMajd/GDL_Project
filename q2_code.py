@@ -19,7 +19,7 @@ warnings.filterwarnings("ignore")
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--epochs', type=int, default=100)
-parser.add_argument('--batch_size', type=int, default=5)
+parser.add_argument('--batch_size', type=int, default=1)
 parser.add_argument('--lr', type=float, default=0.001)
 parser.add_argument('--n_layer', type=int, default=5)
 parser.add_argument('--agg_hidden', type=int, default=32)
@@ -68,7 +68,7 @@ test_loader = DataLoader(test_data, batch_size=1, shuffle=False)
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-model = GaussianGraphSAGE(n_layer=args.n_layer, agg_hidden=args.agg_hidden, fc_hidden=args.fc_hidden).to(device)
+model = GaussianGAT(n_layer=args.n_layer, agg_hidden=args.agg_hidden, fc_hidden=args.fc_hidden).to(device)
 optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
 
 
@@ -83,14 +83,16 @@ def train_step(model, train_loader, optimizer, device):
         graph = graph.to(device)
 
         optimizer.zero_grad()
-        # prediction = model(graph)
-
-        prediction, mean, log_var = model(graph)  # Forward pass
 
         weight = torch.tensor([2, 1], dtype=torch.float32).to(device)
-        loss = model.loss(prediction, graph.y, mean, log_var, weight=weight)  # Compute loss
 
-        # loss = F.cross_entropy(prediction, graph.y, weight=weight)
+        if isinstance(model, GaussianGraphSAGE) or isinstance(model, GaussianGAT):
+            prediction, mean, log_var = model(graph)  # Forward pass
+            loss = model.loss(prediction, graph.y, mean, log_var, weight=weight)  # Compute loss
+        else:
+            prediction = model(graph)
+            loss = F.cross_entropy(prediction, graph.y, weight=weight)
+
         loss.backward()
         optimizer.step()
 
@@ -98,6 +100,8 @@ def train_step(model, train_loader, optimizer, device):
         predicted_class = torch.argmax(prediction, dim=1)
         correct += predicted_class.eq(graph.y).sum().item()
         total_samples += len(graph.y)
+
+        # print(predicted_class, graph.y[0])
         assert predicted_class.shape == graph.y.shape
 
     epoch_loss = epoch_loss / num_train_examples
@@ -116,15 +120,18 @@ def validation_step(model, train_loader, optimizer, device):
     for graph in iter(train_loader):
         graph = graph.to(device)
 
+        weight = torch.tensor([2, 1], dtype=torch.float32).to(device)
+
         with torch.no_grad():
-            # prediction = model(graph)
-            prediction, mean, log_var = model(graph)  # Forward pass
+            if isinstance(model, GaussianGraphSAGE) or isinstance(model, GaussianGAT):
+                prediction, mean, log_var = model(graph)  # Forward pass
+            else:
+                prediction = model(graph)
 
-            weight = torch.tensor([2, 1], dtype=torch.float32).to(device)
+        if isinstance(model, GaussianGraphSAGE) or isinstance(model, GaussianGAT):
             loss = model.loss(prediction, graph.y, mean, log_var, weight=weight)  # Compute loss
-
-        # loss = F.cross_entropy(prediction, graph.y, weight=weight)
-
+        else:
+            loss = F.cross_entropy(prediction, graph.y, weight=weight)
 
         epoch_loss += loss.item()
         predicted_class = torch.argmax(prediction, dim=1)
